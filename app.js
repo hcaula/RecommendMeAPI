@@ -69,8 +69,8 @@ app.post('/register', (req, res) => {
     }
 });
 
-app.get('/test', (req, res) => {
-    auth(req, res);
+app.get('/test', (req, res, next) => {
+    auth(req, res, next);
 });
 
 app.listen(3000, () => console.log(`Express server up.`));

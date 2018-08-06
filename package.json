@@ -2,9 +2,9 @@
     "name": "recommendme",
     "version": "1.0.0",
     "description": "An app that recommends a playlist based on the user's energy level.",
-    "main": "index.js",
+    "main": "app.js",
     "scripts": {
-        "start": "NODE_ENV=development nodemon index.js",
+        "start": "NODE_ENV=development nodemon app.js",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "author": "Henrique Caúla",
