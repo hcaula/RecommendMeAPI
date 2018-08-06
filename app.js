@@ -19,30 +19,23 @@ dbConnection.once('open', () => { console.log(`Mongoose connected on ${process.e
 const appSchema = new mongoose.Schema({ name: String, author: String });
 const App = mongoose.model('App', appSchema);
 
+/* Defining Express routes */
+const app = require('express')();
+app.use(require('body-parser').json());
+
 /* Auth function */
 const auth = (req, res, next) => {
     const appId = req.headers.authorization;
     let error = { status: 401 }
-    if (!appId) {
-        error.message = "No Authorization token sent.";
-        next(error);
-    } else {
-        App.findById(appId, (error, app) => {
-            if (error) {
-                error.status = 500;
-                error.message = "An unexpected error ocurred. We're very sorry.";
-                next(error);
-            } else if (!app) {
-                error.message = "No App with this ID has been registered.";
-                next(error);
-            } else next();
+    if (!appId) res.status(401).json({ error: "No Authorization token sent." });
+    else {
+        App.findById(appId, (err, app) => {
+            if (err) res.status(500).json({ error: "An unexpected error ocurred. We're very sorry." });
+            else if (!app) res.status(401).json({ error: "No App with this ID has been registered." });
+            else next();
         });
     }
 }
-
-/* Defining Express routes */
-const app = require('express')();
-app.use(require('body-parser').json());
 
 /* Register App route */
 app.post('/register', (req, res) => {
@@ -55,11 +48,11 @@ app.post('/register', (req, res) => {
             appAuthor: author
         });
     } else {
-        const app = new App({
+        const newApp = new App({
             name: name,
             author: author
         });
-        app.save((error, newApp) => {
+        newApp.save((error, newApp) => {
             if (error) res.status(500).json({ error: "Something went wrong, try again shortly." });
             else res.status(200).json({
                 message: "App created successfully.",
@@ -69,8 +62,9 @@ app.post('/register', (req, res) => {
     }
 });
 
-app.get('/test', (req, res, next) => {
-    auth(req, res, next);
+/* Test function */
+app.get("/test", auth, (req, res, next) => {
+    res.status(200).json({ message: "OKAY" });
 });
 
 app.listen(3000, () => console.log(`Express server up.`));
