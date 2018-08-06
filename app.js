@@ -38,7 +38,7 @@ const auth = (req, res, next) => {
 }
 
 /* Register App route */
-app.post('/register', (req, res) => {
+app.post('/api/v1/register', (req, res) => {
     const name = req.body.name;
     const author = req.body.author;
     if (!name || !author) {
@@ -62,9 +62,37 @@ app.post('/register', (req, res) => {
     }
 });
 
+/* Refresh token from Spotify */
+const refresh = (next) => {
+    const request = require('request');
+    const options = {
+        url: 'https://accounts.spotify.com/api/token',
+        headers: {
+            'Authorization': `Basic ${process.env.SPOTIFY_ENCODED}`
+        },
+        form: {
+            'grant_type': 'refresh_token',
+            'refresh_token': process.env.SPOTIFY_REFRESH_TOKEN
+        }
+    };
+
+    request.post(options, (error, response, body) => {
+        if (error || response.statusCode !== 200) {
+            console.log(error);
+            console.log(body);
+            next(error);
+        } else next(null, JSON.parse(body).access_token);
+    });
+}
+
 /* Test function */
-app.get("/test", auth, (req, res, next) => {
-    res.status(200).json({ message: "OKAY" });
+app.get("/test", (req, res, next) => {
+    refresh((error, access_token) => {
+        if (error) res.status(500).json({ error: "Something went wrong. We're very sorry." });
+        else {
+            res.status(200).send(access_token);
+        }
+    });
 });
 
 app.listen(3000, () => console.log(`Express server up.`));
