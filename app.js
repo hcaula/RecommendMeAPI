@@ -67,9 +67,7 @@ const refresh = (next) => {
     const request = require('request');
     const options = {
         url: 'https://accounts.spotify.com/api/token',
-        headers: {
-            'Authorization': `Basic ${process.env.SPOTIFY_ENCODED}`
-        },
+        headers: { 'Authorization': `Basic ${process.env.SPOTIFY_ENCODED}` },
         form: {
             'grant_type': 'refresh_token',
             'refresh_token': process.env.SPOTIFY_REFRESH_TOKEN
@@ -80,10 +78,78 @@ const refresh = (next) => {
         if (error || response.statusCode !== 200) {
             console.log(error);
             console.log(body);
-            next(error);
+            next("error");
         } else next(null, JSON.parse(body).access_token);
     });
 }
+
+/* Get recommendations from Spotify function */
+const recommend = (access_token, options, next) => {
+    const request = require('request');
+    const queryString = require('query-string');
+
+    const genres = options.genres.join(',');
+    const min_popularity = 90
+
+    const query = queryString.stringify({
+        target_energy: options.energy,
+        min_popularity: min_popularity,
+        seed_genres: genres
+    });
+
+    options = {
+        url: `https://api.spotify.com/v1/recommendations?${query}`,
+        headers: { 'Authorization': `Bearer ${access_token}` },
+    };
+
+    request.get(options, (error, response, body) => {
+        if (error || response.statusCode !== 200) {
+            console.log(error);
+            console.log(body);
+            next("error");
+        } else {
+            const tracks = JSON.parse(body).tracks.map(t => {
+                return {
+                    name: t.name,
+                    album: t.album.name,
+                    artist: t.artists[0].name,
+                    images: t.images,
+                    href: t.href
+                }
+            });
+
+            next(null, tracks);
+        };
+    });
+}
+
+/* Recommendation route */
+app.get("/api/v1/recommend", auth, (req, res, next) => {
+    refresh((error, access_token) => {
+        if (error) res.status(500).json({ error: "Something went wrong. We're very sorry." });
+        else {
+            const genres = ['pop', 'rock', 'r-n-b'];
+            let energy = req.query.energy;
+            if (!energy) energy = 0.5;
+
+            const options = {
+                energy: energy,
+                genres: genres
+            }
+
+            recommend(access_token, options, (error, playlist) => {
+                if (error) res.status(500).json({ error: "Something went wrong. We're very sorry." });
+                else {
+                    res.status(200).json({
+                        playlist: playlist,
+                        energy: energy,
+                        genres: genres
+                    });
+                }
+            });
+        }
+    });
+});
 
 /* Test function */
 app.get("/test", (req, res, next) => {
