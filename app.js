@@ -32,7 +32,10 @@ const auth = (req, res, next) => {
         App.findById(appId, (err, app) => {
             if (err) res.status(500).json({ error: "An unexpected error ocurred. We're very sorry." });
             else if (!app) res.status(401).json({ error: "No App with this ID has been registered." });
-            else next();
+            else {
+                req.app = app;
+                next();
+            };
         });
     }
 }
@@ -88,13 +91,12 @@ const recommend = (access_token, options, next) => {
     const request = require('request');
     const queryString = require('query-string');
 
-    const genres = options.genres.join(',');
-    const min_popularity = 90
+    const target_popularity = 90;
 
     const query = queryString.stringify({
         target_energy: options.energy,
-        min_popularity: min_popularity,
-        seed_genres: genres
+        target_popularity: target_popularity,
+        seed_genres: options.genres
     });
 
     options = {
@@ -114,7 +116,8 @@ const recommend = (access_token, options, next) => {
                     album: t.album.name,
                     artist: t.artists[0].name,
                     images: t.images,
-                    href: t.href
+                    href: t.href,
+                    spotify: t.external_urls.spotify
                 }
             });
 
@@ -128,36 +131,38 @@ app.get("/api/v1/recommend", auth, (req, res, next) => {
     refresh((error, access_token) => {
         if (error) res.status(500).json({ error: "Something went wrong. We're very sorry." });
         else {
-            const genres = ['pop', 'rock', 'r-n-b'];
-            let energy = req.query.energy;
-            if (!energy) energy = 0.5;
+            try {
+                const genres = req.query.genres ? req.query.genres : 'rock';
+                const energy = req.query.energy ? req.query.energy : 0.5;
 
-            const options = {
-                energy: energy,
-                genres: genres
-            }
-
-            recommend(access_token, options, (error, playlist) => {
-                if (error) res.status(500).json({ error: "Something went wrong. We're very sorry." });
-                else {
-                    res.status(200).json({
-                        playlist: playlist,
-                        energy: energy,
-                        genres: genres
-                    });
+                const options = {
+                    energy: energy,
+                    genres: genres
                 }
-            });
+
+                recommend(access_token, options, (error, playlist) => {
+                    if (error) res.status(500).json({ error: "Something went wrong. We're very sorry." });
+                    else {
+                        res.status(200).json({
+                            playlist: playlist,
+                            energy: energy,
+                            genres: genres
+                        });
+                    }
+                });
+            } catch (error) {
+                console.log(error);
+                res.status(400).json({ error: "Bad request." });
+            }
         }
     });
 });
 
-/* Test function */
-app.get("/test", (req, res, next) => {
-    refresh((error, access_token) => {
-        if (error) res.status(500).json({ error: "Something went wrong. We're very sorry." });
-        else {
-            res.status(200).send(access_token);
-        }
+/* Test App ID validity function */
+app.get("/test", auth, (req, res, next) => {
+    res.status(200).json({ 
+        message: "This App ID is valid!",
+        app: req.app
     });
 });
 
