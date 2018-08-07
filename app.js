@@ -29,7 +29,6 @@ const error500 = { error: "An unexpected error ocurred. We're very sorry. Try ag
 /* Auth function */
 const auth = (req, res, next) => {
     const appId = req.headers.authorization;
-    let error = { status: 401 }
     if (!appId) res.status(401).json({ error: "No Authorization token sent." });
     else {
         App.findById(appId, (err, app) => {
@@ -169,4 +168,5 @@ app.get("/test", auth, (req, res, next) => {
     });
 });
 
+/* Starts server */
 app.listen(3000, () => console.log(`Express server up.`));
