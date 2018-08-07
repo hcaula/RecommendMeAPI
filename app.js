@@ -161,10 +161,16 @@ app.get("/api/v1/recommend", auth, (req, res, next) => {
 });
 
 /* Test App ID validity function */
-app.get("/test", auth, (req, res, next) => {
+app.get("/test", auth, (req, res) => {
     res.status(200).json({ 
         message: "This App ID is valid!",
         app: req.app
+    });
+});
+
+app.get("/", (req, res) => {
+    res.status(200).json({
+        message: "Hey! This server is up and it's saying hello to you."
     });
 });
 
