@@ -7,13 +7,13 @@ if (process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
 
 /* Connecting DB */
 const mongoose = require('mongoose');
-mongoose.connect(process.env.DB_URI, { useNewUrlParser: true });
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true });
 const dbConnection = mongoose.connection;
 dbConnection.on('error', (error) => {
     console.log(error);
     process.exit(1);
 });
-dbConnection.once('open', () => { console.log(`Mongoose connected on ${process.env.DB_URI}`) });
+dbConnection.once('open', () => { console.log(`Mongoose connected on ${process.env.MONGODB_URI}`) });
 
 /* Defining App model */
 const appSchema = new mongoose.Schema({ name: String, author: String });
