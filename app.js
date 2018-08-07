@@ -23,6 +23,9 @@ const App = mongoose.model('App', appSchema);
 const app = require('express')();
 app.use(require('body-parser').json());
 
+/* Static JSON's */
+const error500 = { error: "An unexpected error ocurred. We're very sorry. Try again shortly." };
+
 /* Auth function */
 const auth = (req, res, next) => {
     const appId = req.headers.authorization;
@@ -30,7 +33,7 @@ const auth = (req, res, next) => {
     if (!appId) res.status(401).json({ error: "No Authorization token sent." });
     else {
         App.findById(appId, (err, app) => {
-            if (err) res.status(500).json({ error: "An unexpected error ocurred. We're very sorry." });
+            if (err) res.status(500).json(error500);
             else if (!app) res.status(401).json({ error: "No App with this ID has been registered." });
             else {
                 req.app = app;
@@ -56,7 +59,7 @@ app.post('/api/v1/register', (req, res) => {
             author: author
         });
         newApp.save((error, newApp) => {
-            if (error) res.status(500).json({ error: "Something went wrong, try again shortly." });
+            if (error) res.status(500).json(error500);
             else res.status(200).json({
                 message: "App created successfully.",
                 appId: newApp._id
@@ -129,7 +132,7 @@ const recommend = (access_token, options, next) => {
 /* Recommendation route */
 app.get("/api/v1/recommend", auth, (req, res, next) => {
     refresh((error, access_token) => {
-        if (error) res.status(500).json({ error: "Something went wrong. We're very sorry." });
+        if (error) res.status(500).json(error500);
         else {
             try {
                 const genres = req.query.genres ? req.query.genres : 'rock';
@@ -141,7 +144,7 @@ app.get("/api/v1/recommend", auth, (req, res, next) => {
                 }
 
                 recommend(access_token, options, (error, playlist) => {
-                    if (error) res.status(500).json({ error: "Something went wrong. We're very sorry." });
+                    if (error) res.status(500).json(error500);
                     else {
                         res.status(200).json({
                             playlist: playlist,
