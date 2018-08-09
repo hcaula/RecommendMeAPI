@@ -27,7 +27,7 @@ app.use(require('body-parser').json());
 const allowCrossDomain = function (req, res, next) {
     res.header('Access-Control-Allow-Origin', "*");
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.header('Access-Control-Allow-Headers', '*');
     next();
 }
 app.use(allowCrossDomain);
@@ -37,7 +37,7 @@ const error500 = { error: "An unexpected error ocurred. We're very sorry. Try ag
 
 /* Auth function */
 const auth = (req, res, next) => {
-    const appId = req.headers.auth;
+    const appId = req.headers.authorization;
     if (!appId) res.status(401).json({ error: "No Authorization token sent." });
     else {
         App.findById(appId, (err, app) => {
