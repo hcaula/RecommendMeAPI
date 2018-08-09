@@ -23,6 +23,15 @@ const App = mongoose.model('App', appSchema);
 const app = require('express')();
 app.use(require('body-parser').json());
 
+/* Allowing cross domain requests for local test */
+const allowCrossDomain = function (req, res, next) {
+    res.header('Access-Control-Allow-Origin', "*");
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+}
+app.use(allowCrossDomain);
+
 /* Static JSON's */
 const error500 = { error: "An unexpected error ocurred. We're very sorry. Try again shortly." };
 
@@ -162,7 +171,7 @@ app.get("/api/v1/recommend", auth, (req, res, next) => {
 
 /* Test App ID validity function */
 app.get("/test", auth, (req, res) => {
-    res.status(200).json({ 
+    res.status(200).json({
         message: "This App ID is valid!",
         app: req.app
     });
